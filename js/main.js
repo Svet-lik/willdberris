@@ -16,9 +16,11 @@ const modalCart = document.querySelector("#modal-cart");
 // scroll smooth
 const scrollLinks = document.querySelectorAll("a.scroll-link");
 //goods
-const more = document.querySelector(".more");
-const navigationLinks = document.querySelectorAll(".navigation-link");
 const longGoodsList = document.querySelector(".long-goods-list");
+const viewAll = document.querySelectorAll(".view-all");
+const navigationLinks = document.querySelectorAll(".navigation-link:not(.view-all)");
+const showAcsessories = document.querySelectorAll('.show-acsessories');
+const showClothing = document.querySelectorAll('.show-clothing');
 
 // scroll smooth реализация
 {
@@ -94,6 +96,11 @@ const filterCards = (field, value) => {
 		.then(renderCards);			//и выводит их
 };
 
+const showAll = evt=> {
+	evt.preventDefault();
+	getGoods().then(renderCards);
+};
+
 buttonCart.addEventListener("click", openModal);
 
 modalCart.addEventListener("click", (evt) => {
@@ -105,18 +112,29 @@ modalCart.addEventListener("click", (evt) => {
 		closeModal();
 });
 
-more.addEventListener('click', evt => {
-	evt.preventDefault();
-	getGoods().then(renderCards);
-});
+viewAll.forEach(elem => {
+	elem.addEventListener('click', showAll);
+})
 
 
 navigationLinks.forEach(link => {
 	link.addEventListener('click', evt => {
 		evt.preventDefault();
+		const field = link.dataset.field;
 		const value = link.textContent;
-		if (value === 'All') {getGoods().then(renderCards);} else
-		{const field = link.dataset.field;
-		filterCards(field, value);}
+		filterCards(field, value);
 	})
+});
+
+showAcsessories.forEach(elem => {
+elem.addEventListener('click', evt => {
+	evt.preventDefault();
+	filterCards('category', 'Accessories');
+})
+})
+showClothing.forEach(elem => {
+	elem.addEventListener('click', evt => {
+		evt.preventDefault();
+		filterCards('category', 'Clothing');
+})
 })
