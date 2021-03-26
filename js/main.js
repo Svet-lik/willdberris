@@ -45,19 +45,7 @@ const closeModal = () => {
 
 
 const cart = {
-	cartGoods: [{
-			id: "099",
-			name: "Часы Dior",
-			price: 999,
-			count: 2,
-		},
-		{
-			id: "090",
-			name: "Кеды Вдики",
-			price: 9,
-			count: 3,
-		},
-	],
+	cartGoods: [],
 	renderCart() {
 		cartTableGoods.textContent = '';
 		this.cartGoods.forEach(({
@@ -153,9 +141,6 @@ const cart = {
 		});
 	}
 }
-
-
-
 
 //получаем одну карточку
 const createCard = ({
@@ -268,4 +253,56 @@ document.addEventListener('click', evt => {
 	const addToCart = evt.target.closest('.add-to-cart');
 	if (addToCart) {
 		cart.addCartGoods(addToCart.dataset.id);}
-})
+});
+
+
+// day 4
+
+const modalForm = document.querySelector('.modal-form');
+const formInformer = document.querySelector('.form-informer');
+const postData = dataUser => fetch('server.php', {
+	method: 'POST',
+	body: dataUser,
+});
+
+modalForm.addEventListener('submit', evt => {
+	evt.preventDefault();
+
+	const formData = new FormData(modalForm);
+	if (cart.cartGoods.length === 0) {
+		formInformer.textContent = 'Сначала наполните корзину';
+		formInformer.classList.add('show-info');
+		setTimeout(() => {
+			closeModal();
+			formInformer.classList.remove('show-info');
+		}, 1000);
+	} else {
+		const modaInputs = modalCart.querySelectorAll('.modal-input');
+		if (!modaInputs[0].value || !modaInputs[1].value) {
+			formInformer.textContent = 'Заполните поля';
+			formInformer.classList.add('show-info');
+		} else {
+			formData.append('order', JSON.stringify(cart.cartGoods));
+			postData(formData)
+				.then(response => {	//успешно
+					if (!response.ok) {
+						throw new Error(response.status);
+					}
+					formInformer.textContent ='Ваш заказ успешно отправлен, с вами свяжутся в ближайшее время';
+					console.log(response.statusText);
+				})
+				.catch(err => { 	// ошибка
+					formInformer.textContent = 'К сожалению произошла ошибка, повторите попытку позже';
+					console.log(err);
+				})
+				.finally(() => {	// выполнится в завершении, всегда
+					
+					formInformer.classList.add('show-info');
+					closeModal();
+					modalForm.reset();
+					cart.cartGoods.length = 0;
+					formInformer.classList.remove('show-info');
+				})
+		}
+	}
+});
