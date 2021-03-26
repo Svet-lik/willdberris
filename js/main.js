@@ -21,11 +21,129 @@ const viewAll = document.querySelectorAll(".view-all");
 const navigationLinks = document.querySelectorAll(".navigation-link:not(.view-all)");
 const showAcsessories = document.querySelectorAll('.show-acsessories');
 const showClothing = document.querySelectorAll('.show-clothing');
+// корзина
+const cartTableGoods = document.querySelector('.cart-table__goods');
+const cardTableTotal = document.querySelector('.card-table__total');
+
+//получаем данные
+const getGoods = async () => {
+	const result = await fetch("db/db.json");
+	if (!result.ok) {
+		throw "Ошибочка вышла: " + result.status;
+	}
+	return result.json();
+};
+//open cart
+const openModal = () => {
+	cart.renderCart();
+	modalCart.classList.add("show");
+};
+//close cart
+const closeModal = () => {
+	modalCart.classList.remove("show");
+};
+
+
+const cart = {
+	cartGoods: [{
+			id: "099",
+			name: "Часы Dior",
+			price: 999,
+			count: 2,
+		},
+		{
+			id: "090",
+			name: "Кеды Вдики",
+			price: 9,
+			count: 3,
+		},
+	],
+	renderCart() {
+		cartTableGoods.textContent = '';
+		this.cartGoods.forEach(({
+			id,
+			name,
+			price,
+			count
+		}) => {
+			const trGood = document.createElement('tr');
+			trGood.className = 'cart-item';
+			trGood.dataset.id = id;
+			trGood.innerHTML = `
+				<td>${name}</td>
+				<td>${price}$</td>
+				<td><button class="cart-btn-minus">-</button></td>
+				<td>${count}</td>
+				<td><button class="cart-btn-plus">+</button></td>
+				<td>${price * count}$</td>
+				<td><button class="cart-btn-delete">x</button></td>
+			`
+			cartTableGoods.append(trGood);
+		});
+
+		const totalPrice = this.cartGoods.reduce((sum, item) => {
+			return sum + (item.price * item.count);
+		}, 0);
+		cardTableTotal.textContent = totalPrice + '$';
+	},
+	//удаляет товар из корзины
+	deliteGood(id) {
+		this.cartGoods = this.cartGoods.filter(item => id !== item.id);
+		this.renderCart();
+	},
+	// уменьшает количество товара в корзине
+	minusGood(id) {
+		for (const item of this.cartGoods) {
+			if (item.id === id) {
+				if (item.count <= 1) {
+					this.deliteGood(id)
+				} else {
+					item.count--;
+				}
+				break;
+			}
+		}
+		this.renderCart();
+	},
+	// увеличивает количество товара в корзине
+	plusGood(id) {
+		for (const item of this.cartGoods) {
+			if (item.id === id) {
+				item.count++;
+				break;
+			}
+		}
+		this.renderCart();
+	},
+	// добавляет товар в корзину
+	addCartGoods(id) {
+		const goodItem = this.cartGoods.find(item => item.id === id);
+		if (goodItem) {
+			this.plusGood(id);
+		} else {
+			getGoods()
+				.then(data => data.find(item => item.id === id))
+				.then(({
+					id,
+					name,
+					price
+				}) => {
+					this.cartGoods.push({
+						id,
+						name,
+						price,
+						count: 1
+					});
+				});
+		};
+
+	},
+}
 
 // scroll smooth реализация
 {
 	for (const scrollLink of scrollLinks) {
-		scrollLink.addEventListener("click", (evt) => {
+		scrollLink.addEventListener("click", evt => {
 			evt.preventDefault();
 			const id = scrollLink.getAttribute("href");
 			document.querySelector(id).scrollIntoView({
@@ -36,26 +154,20 @@ const showClothing = document.querySelectorAll('.show-clothing');
 	}
 }
 
-//open cart
-const openModal = () => {
-	modalCart.classList.add("show");
-};
-//close cart
-const closeModal = () => {
-	modalCart.classList.remove("show");
-};
 
-//получаем данные
-const getGoods = async () => {
-	const result = await fetch("db/db.json");
-	if (!result.ok) {
-		throw "Ошибочка вышла: " + result.status;
-	}
-	return result.json();
-};
+
 
 //получаем одну карточку
-const createCard = ({ category, description, gender, id:cardId, img, label, name: goodName, price }) => {
+const createCard = ({
+	category,
+	description,
+	gender,
+	id: cardId,
+	img,
+	label,
+	name: goodName,
+	price
+}) => {
 	const card = document.createElement('div');
 	card.className = 'col-lg-3 col-sm-6';
 	card.innerHTML = `
@@ -74,43 +186,28 @@ const createCard = ({ category, description, gender, id:cardId, img, label, name
 //выводит карточки на страницу
 const renderCards = data => {
 	longGoodsList.textContent = '';
-	const cards = data.map(createCard);	//получает из массива объектов массив элементов вёрстки
+	const cards = data.map(createCard); //получает из массива объектов массив элементов вёрстки
 	/*cards.forEach(card => {		//добавляет div по очереди
 		longGoodsList.append(card);
-	}) */ 
+	}) */
 	// вместо этого:
-	longGoodsList.append(...cards);	//добавляет весь массив сразу
+	longGoodsList.append(...cards); //добавляет весь массив сразу
 
 	document.body.classList.add('show-goods');
 };
 
-// фильтрует сарточки
+// фильтрует карточки
 const filterCards = (field, value) => {
 	getGoods()
-		.then(data => {
-			const filteredGoods = data.filter(good => {
-				return good[field] === value
-			});
-			return filteredGoods;
-		})
-		.then(renderCards);			//и выводит их
+		.then(data => data.filter(good => good[field] === value))
+		.then(renderCards); //и выводит их
 };
 
-const showAll = evt=> {
+const showAll = evt => {
 	evt.preventDefault();
 	getGoods().then(renderCards);
 };
 
-buttonCart.addEventListener("click", openModal);
-
-modalCart.addEventListener("click", (evt) => {
-	const target = evt.target;
-	if (
-		target.classList.contains("overlay") ||
-		target.classList.contains("modal-close")
-	)
-		closeModal();
-});
 
 viewAll.forEach(elem => {
 	elem.addEventListener('click', showAll);
@@ -127,14 +224,48 @@ navigationLinks.forEach(link => {
 });
 
 showAcsessories.forEach(elem => {
-elem.addEventListener('click', evt => {
-	evt.preventDefault();
-	filterCards('category', 'Accessories');
-})
-})
+	elem.addEventListener('click', evt => {
+		evt.preventDefault();
+		filterCards('category', 'Accessories');
+	})
+});
 showClothing.forEach(elem => {
 	elem.addEventListener('click', evt => {
 		evt.preventDefault();
 		filterCards('category', 'Clothing');
-})
+	})
+});
+
+buttonCart.addEventListener("click", openModal);
+
+modalCart.addEventListener("click", (evt) => {
+	const target = evt.target;
+	if (
+		target.classList.contains("overlay") ||
+		target.classList.contains("modal-close")
+	)
+		closeModal();
+});
+
+// слушает нажатие на кнопки +/-/удалить в модалке корзины 
+cartTableGoods.addEventListener('click', evt => {
+	const target = evt.target;
+	if (target.tagName === "BUTTON");
+	const id = target.closest('.cart-item').dataset.id;
+	if (target.classList.contains('cart-btn-delete')) {
+		cart.deliteGood(id);
+	};
+	if (target.classList.contains('cart-btn-minus')) {
+		cart.minusGood(id);
+	};
+	if (target.classList.contains('cart-btn-plus')) {
+		cart.plusGood(id);
+	};
+});
+
+// слушает добавление товара в корзину
+document.addEventListener('click', evt => {
+	const addToCart = evt.target.closest('.add-to-cart');
+	if (addToCart) {
+		cart.addCartGoods(addToCart.dataset.id);}
 })
