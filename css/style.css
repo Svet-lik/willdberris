@@ -67,7 +67,16 @@ button {
     margin-right: 0;
     
 }
-
+.btn-clear {
+    margin-bottom: 15px;
+    margin-right: 50px;
+    margin-top: -10px;
+    background-color: #a01a9c;
+    display: none;
+}
+.btn-clear.show {
+    display: block;
+}
 .cart-count {
     margin-left: 10px;
 }
@@ -372,7 +381,7 @@ button {
     min-width: 600px;
     max-height: 400px;
     padding: 30px;
-    overflow: scroll;
+    overflow-y: scroll;
     position: relative;
 }
 
@@ -407,7 +416,7 @@ button {
     padding: 10px;
     border-radius: 20px;
     border-style: none;
-    margin-bottom: 30px;
+    /* margin-bottom: 30px; */
 }
 
 .cart-table {
